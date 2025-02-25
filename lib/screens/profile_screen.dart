@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -99,10 +101,10 @@ class ProfileScreen extends StatelessWidget {
                         _buildDetailItem('Known Skin Conditions', 'None'),
                       ]),
                       _buildSection('App Settings', [
-                        _buildSettingItem('Notification Settings', Icons.notifications),
-                        _buildSettingItem('Privacy Settings', Icons.privacy_tip),
-                        _buildSettingItem('Language', Icons.language),
-                        _buildSettingItem('Theme', Icons.brightness_6),
+                        _buildSettingItem('Notification Settings', Icons.notifications, context),
+                        _buildSettingItem('Privacy Settings', Icons.privacy_tip, context),
+                        _buildSettingItem('Language', Icons.language, context),
+                        _buildSettingItem('Theme', Icons.brightness_6, context),
                       ]),
                     ],
                   ),
@@ -205,7 +207,26 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingItem(String title, IconData icon) {
+  Widget _buildSettingItem(String title, IconData icon, BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
+    if (title == 'Theme') {
+      return ListTile(
+        leading: Icon(icon, color: Color(0xFF007D41)),
+        title: Text(
+          title,
+          style: TextStyle(fontFamily: 'Poppins'),
+        ),
+        trailing: Switch(
+          value: themeProvider.isDarkMode,
+          onChanged: (value) {
+            themeProvider.toggleTheme();
+          },
+          activeColor: Color(0xFF007D41),
+        ),
+      );
+    }
+
     return ListTile(
       leading: Icon(icon, color: Color(0xFF007D41)),
       title: Text(

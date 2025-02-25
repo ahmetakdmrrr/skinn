@@ -1,32 +1,56 @@
 import 'package:flutter/material.dart';
-import 'screens/Main_Screen.dart';
-import 'screens/Login_Screen.dart';
-import 'screens/Register_Screen.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/main_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
 import 'screens/start_screen.dart';
+import 'providers/theme_provider.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized(); // Flutter binding'i başlat
-  runApp(const MyApp()); // const constructor kullan
+Future<void> main() async {
+  // Flutter binding'i başlat
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    // SharedPreferences instance'ını oluştur
+    final prefs = await SharedPreferences.getInstance();
+    
+    runApp(
+      ChangeNotifierProvider(
+        create: (_) => ThemeProvider()..initPrefs(prefs),
+        child: const MyApp(),
+      ),
+    );
+  } catch (e) {
+    print('SharedPreferences error: $e');
+    // Hata durumunda varsayılan tema ile başlat
+    runApp(
+      ChangeNotifierProvider(
+        create: (_) => ThemeProvider(),
+        child: const MyApp(),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key}); // const constructor ekle
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'LifePath',
-      debugShowCheckedModeBanner: false, // Debug banner'ı kaldır
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        useMaterial3: true, // Material 3 tasarımını kullan
-      ),
-      home: Startscreen(), // StartScreen'i başlangıç ekranı yap
-      routes: {
-        '/login': (context) => LoginScreen(),
-        '/register': (context) => RegisterScreen(),
-        '/main': (context) => MainScreen(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'SafeSkin',
+          debugShowCheckedModeBanner: false,
+          theme: themeProvider.themeData,
+          home: const Startscreen(), // StartScreen olarak düzeltildi
+          routes: {
+            '/login': (context) => const LoginScreen(),
+            '/register': (context) => RegisterScreen(),
+            '/main': (context) => MainScreen(),
+          },
+        );
       },
     );
   }
