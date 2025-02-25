@@ -66,7 +66,7 @@ class LoginScreen extends StatelessWidget {
                     SizedBox(height: 8),
                     Container(
                       width: double.infinity,
-                      height: 42,
+                      height: 55,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
                         color: Color.fromRGBO(217, 235, 240, 1),
@@ -74,7 +74,10 @@ class LoginScreen extends StatelessWidget {
                       child: TextField(
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 15,
+                          ),
                         ),
                       ),
                     ),
@@ -94,7 +97,7 @@ class LoginScreen extends StatelessWidget {
                     SizedBox(height: 8),
                     Container(
                       width: double.infinity,
-                      height: 42,
+                      height: 55,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
                         color: Color.fromRGBO(217, 235, 240, 1),
@@ -103,7 +106,10 @@ class LoginScreen extends StatelessWidget {
                         obscureText: true,
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 15,
+                          ),
                         ),
                       ),
                     ),
