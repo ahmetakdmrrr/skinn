@@ -1,7 +1,124 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  Future<void> _pickImage(BuildContext context) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.camera);
+    if (image != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image captured: ${image.path}')),
+      );
+    }
+  }
+
+  Widget _buildRecentDiagnosis(String title, String imagePath, String date, String condition) {
+    return Container(
+      padding: EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 5,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              imagePath,
+              width: 80,
+              height: 80,
+              fit: BoxFit.cover,
+            ),
+          ),
+          SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  date,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  condition,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'Poppins',
+                    color: Colors.green[700],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHealthTip(String title, String description, IconData icon) {
+    return Container(
+      width: 160,
+      padding: EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 5,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 40, color: Color(0xFF007D41)),
+          SizedBox(height: 10),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          SizedBox(height: 5),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              fontFamily: 'Poppins',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +138,6 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Üst Başlık ve Profil
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -55,8 +171,6 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 30),
-
-                  // Hızlı Tanı Kartı
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.all(20),
@@ -94,9 +208,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 20),
                         ElevatedButton(
-                          onPressed: () {
-                            // Kamera ekranına yönlendir
-                          },
+                          onPressed: () => _pickImage(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Color(0xFF007D41),
@@ -121,8 +233,6 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 30),
-
-                  // Son Tanılar
                   Text(
                     'Recent Diagnoses',
                     style: TextStyle(
@@ -132,23 +242,10 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 15),
-                  _buildRecentDiagnosis(
-                    'Eczema',
-                    'assets/images/eczamaHand.jpg',
-                    '2 days ago',
-                    'Mild condition',
-                  ),
+                  _buildRecentDiagnosis('Eczema', 'assets/images/eczamaHand.jpg', '2 days ago', 'Mild condition'),
                   SizedBox(height: 15),
-                  _buildRecentDiagnosis(
-                    'Acne',
-                    'assets/images/acneFace.jpg',
-                    '1 week ago',
-                    'Moderate condition',
-                  ),
-
+                  _buildRecentDiagnosis('Acne', 'assets/images/acneFace.jpg', '1 week ago', 'Moderate condition'),
                   SizedBox(height: 30),
-
-                  // Sağlık İpuçları
                   Text(
                     'Skin Health Tips',
                     style: TextStyle(
@@ -162,21 +259,11 @@ class HomeScreen extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildHealthTip(
-                          'Sun Protection',
-                          'Always use sunscreen with at least SPF 30',
-                          Icons.wb_sunny,
-                        ),
-                        _buildHealthTip(
-                          'Hydration',
-                          'Drink 8-10 glasses of water daily',
-                          Icons.water_drop,
-                        ),
-                        _buildHealthTip(
-                          'Skin Care',
-                          'Moisturize your skin daily',
-                          Icons.face,
-                        ),
+                        _buildHealthTip('Sun Protection', 'Use sunscreen with at least SPF 30', Icons.wb_sunny),
+                        SizedBox(width: 10),
+                        _buildHealthTip('Hydration', 'Drink 8-10 glasses of water daily', Icons.water_drop),
+                        SizedBox(width: 10),
+                        _buildHealthTip('Skin Care', 'Moisturize your skin daily', Icons.face),
                       ],
                     ),
                   ),
@@ -185,117 +272,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildRecentDiagnosis(
-    String condition,
-    String imagePath,
-    String time,
-    String severity,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              imagePath,
-              width: 70,
-              height: 70,
-              fit: BoxFit.cover,
-            ),
-          ),
-          SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  condition,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                Text(
-                  time,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                Text(
-                  severity,
-                  style: TextStyle(
-                    color: Color(0xFF007D41),
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: Colors.grey),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHealthTip(String title, String description, IconData icon) {
-    return Container(
-      width: 200,
-      margin: EdgeInsets.only(right: 15),
-      padding: EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: Color(0xFF007D41), size: 30),
-          SizedBox(height: 10),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Poppins',
-            ),
-          ),
-          SizedBox(height: 5),
-          Text(
-            description,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-              fontFamily: 'Poppins',
-            ),
-          ),
-        ],
       ),
     );
   }
