@@ -8,29 +8,64 @@ class DiagnosisScreen extends StatelessWidget {
 
   final ImagePicker picker = ImagePicker();
 
-  Future<void> _takePhoto() async {
-    final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+  // Hastalık verilerini ekleyelim
+  final Map<String, Map<String, dynamic>> diseaseData = {
+    'Eczema': {
+      'image': 'assets/images/eczamaHand.jpg',
+      'details': {
+        'What is Eczema?': 'Eczema (atopic dermatitis) is a condition that makes your skin red and itchy. It\'s common in children but can occur at any age.',
+        'Causes': 'Eczema is likely related to a mix of factors: genetics, immune system dysfunction, environmental triggers, and stress.',
+        'Symptoms': '• Dry, itchy skin\n• Red rashes\n• Rough, leathery patches\n• Inflammation\n• Skin swelling',
+        'Treatment': '• Moisturizing regularly\n• Topical corticosteroids\n• Antihistamines for itching\n• Avoiding triggers\n• Using mild soaps',
+        'Prevention': '• Identify and avoid triggers\n• Keep skin moisturized\n• Take shorter showers with warm (not hot) water\n• Use gentle soaps\n• Manage stress levels',
+      },
+    },
+    'Psoriasis': {
+      'image': 'assets/images/psoriasiArm.jpg',
+      'details': {
+        'What is Psoriasis?': 'Psoriasis is a chronic autoimmune condition that causes rapid buildup of skin cells, resulting in scaling on the skin\'s surface.',
+        'Causes': 'Psoriasis occurs when your immune system sends faulty signals that speed up skin cell growth. Genetics and environmental factors play a role.',
+        'Symptoms': '• Red patches of skin\n• Silvery scales\n• Dry, cracked skin\n• Itching and burning\n• Thick, ridged nails',
+        'Treatment': '• Topical treatments\n• Light therapy\n• Systemic medications\n• Biologics\n• Lifestyle changes',
+        'Prevention': '• Avoid triggers like stress\n• Keep skin moisturized\n• Avoid skin injuries\n• Eat a healthy diet\n• Get regular exercise',
+      },
+    },
+    'Acne': {
+      'image': 'assets/images/acneFace.jpg',
+      'details': {
+        'What is Acne?': 'Acne is a skin condition that occurs when hair follicles become plugged with oil and dead skin cells, leading to pimples, blackheads, and whiteheads.',
+        'Causes': 'Acne occurs when pores become clogged with oil, dead skin cells, and bacteria. Hormones, diet, and stress can contribute to outbreaks.',
+        'Symptoms': '• Whiteheads\n• Blackheads\n• Pimples\n• Cysts\n• Nodules',
+        'Treatment': '• Regular cleansing\n• Topical medications\n• Oral medications\n• Chemical peels\n• Proper skincare routine',
+        'Prevention': '• Wash face twice daily\n• Avoid touching face\n• Use non-comedogenic products\n• Maintain a healthy diet\n• Manage stress levels',
+      },
+    },
+  };
 
-    if (photo != null) {
-      print("Fotoğraf çekildi: ${photo.path}");
+  Future<void> _takePhoto(BuildContext context) async {
+    try {
+      final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+      if (photo != null) {
+        print("Fotoğraf çekildi: ${photo.path}");
+        // Buraya daha sonra fotoğraf analizi için kod eklenecek
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kamera izni gerekli!')),
+      );
     }
   }
 
   Future<void> _uploadPhoto(BuildContext context) async {
-    var status = await Permission.photos.status;
-
-    if (!status.isGranted) {
-      status = await Permission.photos.request();
-    }
-
-    if (status.isGranted) {
+    try {
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
         print("Fotoğraf seçildi: ${image.path}");
+        // Buraya daha sonra fotoğraf analizi için kod eklenecek
       }
-    } else {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Galeri erişim izni reddedildi!')),
+        const SnackBar(content: Text('Galeri izni gerekli!')),
       );
     }
   }
@@ -71,7 +106,7 @@ class DiagnosisScreen extends StatelessWidget {
                         'Take Photo',
                         Icons.camera_alt,
                         'Use camera to analyze skin condition',
-                        _takePhoto,
+                            () => _takePhoto(context),
                       ),
                     ),
                     SizedBox(width: 20),
@@ -189,7 +224,18 @@ class DiagnosisScreen extends StatelessWidget {
       String imagePath,
       ) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DiseaseDetailScreen(
+              title: title,
+              imagePath: diseaseData[title]!['image'] as String,
+              details: diseaseData[title]!['details'] as Map<String, String>,
+            ),
+          ),
+        );
+      },
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         elevation: 5,
@@ -197,7 +243,12 @@ class DiagnosisScreen extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.horizontal(left: Radius.circular(15)),
-              child: Image.asset(imagePath, width: 100, height: 100, fit: BoxFit.cover),
+              child: Image.asset(
+                imagePath,
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+              ),
             ),
             SizedBox(width: 10),
             Expanded(
