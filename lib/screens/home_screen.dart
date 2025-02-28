@@ -1,7 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../screens/diagnosis_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  Future<void> _startDiagnosis(BuildContext context) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+      
+      if (photo != null) {
+        // ignore: use_build_context_synchronously
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DiagnosisScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kamera açılırken bir hata oluştu')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,9 +117,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 20),
                         ElevatedButton(
-                          onPressed: () {
-                            // Kamera ekranına yönlendir
-                          },
+                          onPressed: () => _startDiagnosis(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Color(0xFF007D41),

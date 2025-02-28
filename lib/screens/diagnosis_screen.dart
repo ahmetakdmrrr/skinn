@@ -1,8 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../services/skin_disease_analyzer.dart';
+import '../services/diagnosis_repository.dart';
 import 'disease_detail_screen.dart';
 
-class DiagnosisScreen extends StatelessWidget {
-  DiagnosisScreen({super.key});
+class DiagnosisScreen extends StatefulWidget {
+  const DiagnosisScreen({super.key});
+
+  @override
+  State<DiagnosisScreen> createState() => _DiagnosisScreenState();
+}
+
+class _DiagnosisScreenState extends State<DiagnosisScreen> {
+  final ImagePicker picker = ImagePicker();
+  final SkinDiseaseAnalyzer analyzer = SkinDiseaseAnalyzer();
+  final DiagnosisRepository repository = DiagnosisRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAnalyzer();
+  }
+
+  Future<void> _initializeAnalyzer() async {
+    try {
+      await analyzer.initializeModel();
+    } catch (e) {
+      print('Model yüklenirken hata: $e');
+    }
+  }
 
   // Hastalık detayları - Normalde cloud'dan gelecek
   final Map<String, Map<String, dynamic>> diseaseData = {
@@ -52,6 +78,153 @@ class DiagnosisScreen extends StatelessWidget {
     },
   };
 
+  void _showDiagnosisResult(BuildContext context, Map<String, double> results) {
+    // En yüksek olasılıklı 3 sonucu al
+    var sortedResults = results.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    var top3 = sortedResults.take(3).toList();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Tanı Sonuçları'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ...top3.map((entry) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(child: Text(entry.key)),
+                  Text('${(entry.value * 100).toStringAsFixed(1)}%'),
+                ],
+              ),
+            )),
+            SizedBox(height: 16),
+            Text(
+              'Not: Bu sonuçlar tahminidir. Kesin tanı için lütfen bir dermatoloğa başvurun.',
+              style: TextStyle(
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Tamam'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Hastalık detaylarına git
+              if (top3.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DiseaseDetailScreen(
+                      title: top3[0].key,
+                      imagePath: diseaseData[top3[0].key]!['image'] as String,
+                      details: diseaseData[top3[0].key]!['details'] as Map<String, String>,
+                    ),
+                  ),
+                );
+              }
+            },
+            child: Text('Detayları Gör'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _analyzeImage(BuildContext context, String imagePath) async {
+    try {
+      final results = await analyzer.analyzeImage(imagePath);
+      _showDiagnosisResult(context, results);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Görüntü analiz edilirken bir hata oluştu')),
+      );
+    }
+  }
+
+  Widget _buildOptionCard(
+    BuildContext context,
+    String title,
+    IconData icon,
+    String description,
+    VoidCallback onTap,
+  ) {
+    return Material(
+      color: Colors.white,
+      elevation: 5,
+      borderRadius: BorderRadius.circular(15),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(15),
+        child: Container(
+          padding: EdgeInsets.all(15),
+          child: Column(
+            children: [
+              Icon(icon, size: 40, color: Color(0xFF007D41)),
+              SizedBox(height: 10),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(height: 5),
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Kamera ve galeri işlevselliği
+  Future<void> _takePicture(BuildContext context) async {
+    try {
+      final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+      if (photo != null) {
+        await _analyzeImage(context, photo.path);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fotoğraf çekilirken bir hata oluştu')),
+      );
+    }
+  }
+
+  Future<void> _pickImage(BuildContext context) async {
+    try {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        await _analyzeImage(context, image.path);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fotoğraf seçilirken bir hata oluştu')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,9 +264,7 @@ class DiagnosisScreen extends StatelessWidget {
                         'Take Photo',
                         Icons.camera_alt,
                         'Use camera to analyze skin condition',
-                        () {
-                          // Kamera işlevselliği
-                        },
+                        () => _takePicture(context),
                       ),
                     ),
                     SizedBox(width: 20),
@@ -103,9 +274,7 @@ class DiagnosisScreen extends StatelessWidget {
                         'Upload Photo',
                         Icons.photo_library,
                         'Choose photo from gallery',
-                        () {
-                          // Galeri işlevselliği
-                        },
+                        () => _pickImage(context),
                       ),
                     ),
                   ],
@@ -155,56 +324,6 @@ class DiagnosisScreen extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOptionCard(
-    BuildContext context,
-    String title,
-    IconData icon,
-    String description,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 40, color: Color(0xFF007D41)),
-            SizedBox(height: 10),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Poppins',
-              ),
-            ),
-            SizedBox(height: 5),
-            Text(
-              description,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ],
         ),
       ),
     );
