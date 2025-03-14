@@ -2,52 +2,95 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'disease_detail_screen.dart';
+import 'package:skinn/services/model_service.dart';
+class DiagnosisScreen extends StatefulWidget {
+  const DiagnosisScreen({super.key});
 
-class DiagnosisScreen extends StatelessWidget {
-  DiagnosisScreen({super.key});
+  @override
+  _DiagnosisScreenState createState() => _DiagnosisScreenState();
+}
 
+class _DiagnosisScreenState extends State<DiagnosisScreen> {
   final ImagePicker picker = ImagePicker();
+  final ModelService _modelService = ModelService();
+  String? _predictionResult;
+  bool _isModelLoading = true; // Modelin yüklenme durumunu takip et
 
-  // Hastalık verilerini ekleyelim
   final Map<String, Map<String, dynamic>> diseaseData = {
     'Eczema': {
       'image': 'assets/images/eczamaHand.jpg',
       'details': {
-        'What is Eczema?': 'Eczema (atopic dermatitis) is a condition that makes your skin red and itchy. It\'s common in children but can occur at any age.',
-        'Causes': 'Eczema is likely related to a mix of factors: genetics, immune system dysfunction, environmental triggers, and stress.',
-        'Symptoms': '• Dry, itchy skin\n• Red rashes\n• Rough, leathery patches\n• Inflammation\n• Skin swelling',
-        'Treatment': '• Moisturizing regularly\n• Topical corticosteroids\n• Antihistamines for itching\n• Avoiding triggers\n• Using mild soaps',
-        'Prevention': '• Identify and avoid triggers\n• Keep skin moisturized\n• Take shorter showers with warm (not hot) water\n• Use gentle soaps\n• Manage stress levels',
+        'What is Eczema?': 'Eczema (atopic dermatitis) is a condition that makes your skin red and itchy.',
+        'Causes': 'Eczema is likely related to a mix of factors: genetics, immune system dysfunction, environmental triggers.',
+        'Symptoms': '• Dry, itchy skin\n• Red rashes\n• Rough patches',
+        'Treatment': '• Moisturizing\n• Topical corticosteroids\n• Avoiding triggers',
+        'Prevention': '• Avoid triggers\n• Keep skin moisturized\n• Manage stress',
       },
     },
     'Psoriasis': {
       'image': 'assets/images/psoriasiArm.jpg',
       'details': {
-        'What is Psoriasis?': 'Psoriasis is a chronic autoimmune condition that causes rapid buildup of skin cells, resulting in scaling on the skin\'s surface.',
-        'Causes': 'Psoriasis occurs when your immune system sends faulty signals that speed up skin cell growth. Genetics and environmental factors play a role.',
-        'Symptoms': '• Red patches of skin\n• Silvery scales\n• Dry, cracked skin\n• Itching and burning\n• Thick, ridged nails',
-        'Treatment': '• Topical treatments\n• Light therapy\n• Systemic medications\n• Biologics\n• Lifestyle changes',
-        'Prevention': '• Avoid triggers like stress\n• Keep skin moisturized\n• Avoid skin injuries\n• Eat a healthy diet\n• Get regular exercise',
+        'What is Psoriasis?': 'Psoriasis is a chronic autoimmune condition causing scaling on the skin.',
+        'Causes': 'Immune system dysfunction, genetics, and environmental factors.',
+        'Symptoms': '• Red patches\n• Silvery scales\n• Dry, cracked skin',
+        'Treatment': '• Topical treatments\n• Light therapy\n• Systemic medications',
+        'Prevention': '• Avoid triggers\n• Moisturize\n• Healthy diet',
       },
     },
     'Acne': {
       'image': 'assets/images/acneFace.jpg',
       'details': {
-        'What is Acne?': 'Acne is a skin condition that occurs when hair follicles become plugged with oil and dead skin cells, leading to pimples, blackheads, and whiteheads.',
-        'Causes': 'Acne occurs when pores become clogged with oil, dead skin cells, and bacteria. Hormones, diet, and stress can contribute to outbreaks.',
-        'Symptoms': '• Whiteheads\n• Blackheads\n• Pimples\n• Cysts\n• Nodules',
-        'Treatment': '• Regular cleansing\n• Topical medications\n• Oral medications\n• Chemical peels\n• Proper skincare routine',
-        'Prevention': '• Wash face twice daily\n• Avoid touching face\n• Use non-comedogenic products\n• Maintain a healthy diet\n• Manage stress levels',
+        'What is Acne?': 'Acne occurs when hair follicles become plugged with oil and dead skin cells.',
+        'Causes': 'Clogged pores, hormones, diet, and stress.',
+        'Symptoms': '• Whiteheads\n• Blackheads\n• Pimples',
+        'Treatment': '• Cleansing\n• Topical medications\n• Oral medications',
+        'Prevention': '• Wash face daily\n• Avoid touching face\n• Healthy diet',
       },
     },
   };
 
+  final List<String> labels = [
+    'Acne',
+    'Candidiasis',
+    'Eczema',
+    'Psoriasis',
+    'Rosacea',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadModel(); // Modeli yükle
+  }
+
+  Future<void> _loadModel() async {
+    setState(() {
+      _isModelLoading = true;
+    });
+    await _modelService.loadModel();
+    setState(() {
+      _isModelLoading = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    _modelService.dispose();
+    super.dispose();
+  }
+
   Future<void> _takePhoto(BuildContext context) async {
+    if (_isModelLoading) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Model hala yükleniyor, lütfen bekleyin.')),
+      );
+      return;
+    }
     try {
       final XFile? photo = await picker.pickImage(source: ImageSource.camera);
       if (photo != null) {
         print("Fotoğraf çekildi: ${photo.path}");
-        // Buraya daha sonra fotoğraf analizi için kod eklenecek
+        await _analyzeImage(photo);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,16 +100,49 @@ class DiagnosisScreen extends StatelessWidget {
   }
 
   Future<void> _uploadPhoto(BuildContext context) async {
+    if (_isModelLoading) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Model hala yükleniyor, lütfen bekleyin.')),
+      );
+      return;
+    }
     try {
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
         print("Fotoğraf seçildi: ${image.path}");
-        // Buraya daha sonra fotoğraf analizi için kod eklenecek
+        await _analyzeImage(image);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Galeri izni gerekli!')),
       );
+    }
+  }
+
+  Future<void> _analyzeImage(XFile image) async {
+    final processedImage = await _modelService.pickAndProcessImageFromFile(image.path);
+    if (processedImage != null) {
+      final prediction = await _modelService.runModel(processedImage);
+      if (prediction != null) {
+        final maxIndex = prediction.indexOf(prediction.reduce((a, b) => a > b ? a : b));
+        final predictedLabel = labels[maxIndex];
+        setState(() {
+          _predictionResult = 'Tahmin: $predictedLabel (${(prediction[maxIndex] * 100).toStringAsFixed(2)}%)';
+        });
+
+        if (diseaseData.containsKey(predictedLabel)) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DiseaseDetailScreen(
+                title: predictedLabel,
+                imagePath: diseaseData[predictedLabel]!['image'] as String,
+                details: diseaseData[predictedLabel]!['details'] as Map<String, String>,
+              ),
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -96,6 +172,11 @@ class DiagnosisScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              if (_isModelLoading)
+                const Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: CircularProgressIndicator(),
+                ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
@@ -106,7 +187,7 @@ class DiagnosisScreen extends StatelessWidget {
                         'Take Photo',
                         Icons.camera_alt,
                         'Use camera to analyze skin condition',
-                            () => _takePhoto(context),
+                        () => _takePhoto(context),
                       ),
                     ),
                     SizedBox(width: 20),
@@ -116,13 +197,26 @@ class DiagnosisScreen extends StatelessWidget {
                         'Upload Photo',
                         Icons.photo_library,
                         'Choose photo from gallery',
-                            () => _uploadPhoto(context),
+                        () => _uploadPhoto(context),
                       ),
                     ),
                   ],
                 ),
               ),
               SizedBox(height: 20),
+              if (_predictionResult != null && !_isModelLoading)
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text(
+                    _predictionResult!,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
               Expanded(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.all(20),
@@ -141,19 +235,19 @@ class DiagnosisScreen extends StatelessWidget {
                       _buildInfoCard(
                         context,
                         'Acne',
-                        'A skin condition that occurs when hair follicles become plugged with oil and dead skin cells.',
+                        'A skin condition that occurs when hair follicles become plugged.',
                         'assets/images/acneFace.jpg',
                       ),
                       _buildInfoCard(
                         context,
                         'Psoriasis',
-                        'An immune-mediated disease that causes raised, red, scaly patches to appear on the skin.',
+                        'An immune-mediated disease causing red, scaly patches.',
                         'assets/images/psoriasiArm.jpg',
                       ),
                       _buildInfoCard(
                         context,
                         'Eczema',
-                        'A condition that makes your skin red and itchy. It\'s common in children but can occur at any age.',
+                        'A condition that makes your skin red and itchy.',
                         'assets/images/eczamaHand.jpg',
                       ),
                     ],
@@ -168,12 +262,12 @@ class DiagnosisScreen extends StatelessWidget {
   }
 
   Widget _buildOptionCard(
-      BuildContext context,
-      String title,
-      IconData icon,
-      String description,
-      VoidCallback onTap,
-      ) {
+    BuildContext context,
+    String title,
+    IconData icon,
+    String description,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -218,11 +312,11 @@ class DiagnosisScreen extends StatelessWidget {
   }
 
   Widget _buildInfoCard(
-      BuildContext context,
-      String title,
-      String description,
-      String imagePath,
-      ) {
+    BuildContext context,
+    String title,
+    String description,
+    String imagePath,
+  ) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
