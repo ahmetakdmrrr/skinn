@@ -72,6 +72,8 @@ flutter:
     - assets/images/psoriasiArm.jpg
     - assets/images/eczamaHand.jpg
     - assets/images/logo.png
+    - assets/images/default_skin.jpg
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

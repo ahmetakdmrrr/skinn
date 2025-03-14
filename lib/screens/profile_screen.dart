@@ -12,6 +12,33 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  String _fullName = '';
+  String _email = '';
+  String _birthDate = '';
+  String _skinType = '';
+  String _allergies = '';
+  String _skinConditions = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final userData = await SharedPreferencesHelper.getUserData();
+    if (userData != null) {
+      setState(() {
+        _fullName = userData['fullName'] ?? 'İsim Belirtilmedi';
+        _email = userData['email'] ?? 'Email Belirtilmedi';
+        _birthDate = userData['birthDate'] ?? 'Belirtilmedi';
+        _skinType = userData['skinType'] ?? 'Belirtilmedi';
+        _allergies = userData['allergies'] ?? 'Belirtilmedi';
+        _skinConditions = userData['skinConditions'] ?? 'Belirtilmedi';
+      });
+    }
+  }
+
   void _handleLogout() async {
     // Logout işlemi
     await SharedPreferencesHelper.setLoggedIn(false);
@@ -23,6 +50,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
         (Route<dynamic> route) => false, // Tüm route'ları temizle
       );
     }
+  }
+
+  Future<void> _editProfile() async {
+    // Düzenleme dialog'unu göster
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Profili Düzenle'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: InputDecoration(labelText: 'Ad Soyad'),
+                controller: TextEditingController(text: _fullName),
+                onChanged: (value) => _fullName = value,
+              ),
+              TextField(
+                decoration: InputDecoration(labelText: 'Doğum Tarihi'),
+                controller: TextEditingController(text: _birthDate),
+                onChanged: (value) => _birthDate = value,
+              ),
+              TextField(
+                decoration: InputDecoration(labelText: 'Cilt Tipi'),
+                controller: TextEditingController(text: _skinType),
+                onChanged: (value) => _skinType = value,
+              ),
+              TextField(
+                decoration: InputDecoration(labelText: 'Alerjiler'),
+                controller: TextEditingController(text: _allergies),
+                onChanged: (value) => _allergies = value,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () async {
+              // Profil bilgilerini güncelle
+              await SharedPreferencesHelper.updateUserProfile(
+                fullName: _fullName,
+                birthDate: _birthDate,
+                skinType: _skinType,
+                allergies: _allergies,
+              );
+              
+              if (mounted) {
+                Navigator.pop(context);
+                setState(() {}); // UI'ı yenile
+              }
+            },
+            child: Text('Kaydet'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildSettingItem(String title, IconData icon, BuildContext context) {
@@ -101,7 +188,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Column(
                             children: [
                               Text(
-                                'John Doe',
+                                _fullName,
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -109,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ),
                               Text(
-                                'john.doe@example.com',
+                                _email,
                                 style: TextStyle(
                                   color: Colors.grey[600],
                                   fontFamily: 'Poppins',
@@ -118,7 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ],
                           ),
                           IconButton(
-                            onPressed: () {},
+                            onPressed: _editProfile,
                             icon: Icon(Icons.edit),
                             color: Color(0xFF007D41),
                           ),
@@ -145,11 +232,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     children: [
                       _buildSection('Personal Details', [
-                        _buildDetailItem('Full Name', 'John Doe'),
-                        _buildDetailItem('Date of Birth', '01/01/1990'),
-                        _buildDetailItem('Skin Type', 'Combination'),
-                        _buildDetailItem('Allergies', 'None'),
-                        _buildDetailItem('Known Skin Conditions', 'None'),
+                        _buildDetailItem('Full Name', _fullName),
+                        _buildDetailItem('Date of Birth', _birthDate),
+                        _buildDetailItem('Skin Type', _skinType),
+                        _buildDetailItem('Allergies', _allergies),
+                        _buildDetailItem('Known Skin Conditions', _skinConditions),
                       ]),
                       _buildSection('App Settings', [
                         _buildSettingItem('Notification Settings', Icons.notifications, context),

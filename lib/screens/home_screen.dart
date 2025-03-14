@@ -1,8 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:skinn/utils/shared_preferences_helper.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _fullName = '';
+  List<Map<String, dynamic>> _recentDiagnoses = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+    _loadRecentDiagnoses();
+  }
+
+  Future<void> _loadUserData() async {
+    final userData = await SharedPreferencesHelper.getUserData();
+    if (userData != null) {
+      setState(() {
+        _fullName = userData['fullName'] ?? 'User';
+      });
+    }
+  }
+
+  Future<void> _loadRecentDiagnoses() async {
+    final history = await SharedPreferencesHelper.getDiagnosisHistory();
+    setState(() {
+      _recentDiagnoses = history.take(2).toList(); // Son 2 teşhisi al
+    });
+  }
 
   Future<void> _pickImage(BuildContext context) async {
     final ImagePicker picker = ImagePicker();
@@ -14,7 +46,7 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildRecentDiagnosis(String title, String imagePath, String date, String condition) {
+  Widget _buildRecentDiagnosis(Map<String, dynamic> diagnosis) {
     return Container(
       padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -33,7 +65,7 @@ class HomeScreen extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: Image.asset(
-              imagePath,
+              _getImageForCondition(diagnosis['condition'] ?? ''),
               width: 80,
               height: 80,
               fit: BoxFit.cover,
@@ -45,7 +77,7 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  diagnosis['condition'] ?? 'Unknown Condition',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -54,7 +86,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 Text(
-                  date,
+                  _formatDate(diagnosis['date'] ?? ''),
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -63,7 +95,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 Text(
-                  condition,
+                  diagnosis['severity'] ?? 'Unknown Severity',
                   style: TextStyle(
                     fontSize: 14,
                     fontFamily: 'Poppins',
@@ -76,6 +108,34 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.day} ${_getMonth(date.month)} ${date.year}';
+    } catch (e) {
+      return 'Invalid date';
+    }
+  }
+
+  String _getMonth(int month) {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[month - 1];
+  }
+
+  String _getImageForCondition(String condition) {
+    if (condition.isEmpty) return 'assets/images/default_skin.jpg';
+    
+    final Map<String, String> conditionImages = {
+      'Acne': 'assets/images/acneFace.jpg',
+      'Eczema': 'assets/images/eczamaHand.jpg',
+      'Psoriasis': 'assets/images/psoriasiArm.jpg',
+    };
+    return conditionImages[condition] ?? 'assets/images/default_skin.jpg';
   }
 
   Widget _buildHealthTip(String title, String description, IconData icon) {
@@ -153,7 +213,7 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'John Doe',
+                            _fullName,
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -242,9 +302,25 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 15),
-                  _buildRecentDiagnosis('Eczema', 'assets/images/eczamaHand.jpg', '2 days ago', 'Mild condition'),
-                  SizedBox(height: 15),
-                  _buildRecentDiagnosis('Acne', 'assets/images/acneFace.jpg', '1 week ago', 'Moderate condition'),
+                  if (_recentDiagnoses.isEmpty)
+                    Center(
+                      child: Text(
+                        'No recent diagnoses',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    )
+                  else
+                    ..._recentDiagnoses.map((diagnosis) {
+                      return Column(
+                        children: [
+                          _buildRecentDiagnosis(diagnosis),
+                          SizedBox(height: 15),
+                        ],
+                      );
+                    }).toList(),
                   SizedBox(height: 30),
                   Text(
                     'Skin Health Tips',

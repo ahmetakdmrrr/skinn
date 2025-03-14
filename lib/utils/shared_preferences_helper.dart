@@ -57,4 +57,42 @@ class SharedPreferencesHelper {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
+
+  // Kullanıcı profil bilgilerini güncelleme
+  static Future<void> updateUserProfile({
+    String? fullName,
+    String? birthDate,
+    String? skinType,
+    String? allergies,
+    String? skinConditions,
+  }) async {
+    Map<String, dynamic>? currentData = await getUserData();
+    Map<String, dynamic> newData = currentData ?? {};
+    
+    if (fullName != null) newData['fullName'] = fullName;
+    if (birthDate != null) newData['birthDate'] = birthDate;
+    if (skinType != null) newData['skinType'] = skinType;
+    if (allergies != null) newData['allergies'] = allergies;
+    if (skinConditions != null) newData['skinConditions'] = skinConditions;
+    
+    await saveUserData(newData);
+  }
+
+  // Teşhis sonucunu kaydetme ve skin conditions'ı güncelleme
+  static Future<void> addDiagnosis(Map<String, dynamic> diagnosis) async {
+    // Mevcut teşhis geçmişini al
+    List<Map<String, dynamic>> history = await getDiagnosisHistory();
+    history.insert(0, diagnosis); // Yeni teşhisi başa ekle
+    
+    // Teşhis geçmişini kaydet
+    await saveDiagnosisHistory(history);
+    
+    // Kullanıcı bilgilerini güncelle
+    Map<String, dynamic>? userData = await getUserData();
+    if (userData != null) {
+      // En son teşhis edilen durumu skin conditions olarak kaydet
+      userData['skinConditions'] = diagnosis['condition'];
+      await saveUserData(userData);
+    }
+  }
 } 

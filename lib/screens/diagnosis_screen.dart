@@ -134,6 +134,20 @@ class _DiagnosisScreenState extends State<DiagnosisScreen> {
         predictions.sort((a, b) => b.value.compareTo(a.value));
         final top3 = predictions.take(3).toList();
 
+        // Teşhis sonucunu kaydet
+        final diagnosisData = {
+          'condition': top3[0].key,
+          'confidence': top3[0].value,
+          'severity': _getSeverityFromConfidence(top3[0].value),
+          'date': DateTime.now().toIso8601String(),
+          'imagePath': image.path,
+          'status': 'Pending review',
+          'isPending': true,
+        };
+        
+        // Teşhisi SharedPreferences'a kaydet
+        await SharedPreferencesHelper.addDiagnosis(diagnosisData);
+
         setState(() {
           _predictionResult = 'Prediction: ${top3[0].key} (${(top3[0].value * 100).toStringAsFixed(2)}%)';
         });
@@ -153,27 +167,14 @@ class _DiagnosisScreenState extends State<DiagnosisScreen> {
     ),
   );
         }
-
-        Map<String, dynamic> diagnosisData = {
-          'date': DateTime.now().toIso8601String(),
-          'prediction': top3[0].key,
-          'confidence': top3[0].value,
-        };
-
-        _saveDiagnosis(diagnosisData);
       }
     }
   }
 
-  void _saveDiagnosis(Map<String, dynamic> diagnosisData) async {
-    // Mevcut geçmişi al
-    List<Map<String, dynamic>> history = await SharedPreferencesHelper.getDiagnosisHistory();
-    
-    // Yeni teşhisi ekle
-    history.add(diagnosisData);
-    
-    // Güncellenmiş geçmişi kaydet
-    await SharedPreferencesHelper.saveDiagnosisHistory(history);
+  String _getSeverityFromConfidence(double confidence) {
+    if (confidence > 0.8) return 'Severe condition';
+    if (confidence > 0.6) return 'Moderate condition';
+    return 'Mild condition';
   }
 
   @override
