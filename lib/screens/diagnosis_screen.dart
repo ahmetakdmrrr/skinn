@@ -124,23 +124,32 @@ class _DiagnosisScreenState extends State<DiagnosisScreen> {
     if (processedImage != null) {
       final prediction = await _modelService.runModel(processedImage);
       if (prediction != null) {
-        final maxIndex = prediction.indexOf(prediction.reduce((a, b) => a > b ? a : b));
-        final predictedLabel = labels[maxIndex];
+        List<MapEntry<String, double>> predictions = [];
+        for (int i = 0; i < prediction.length; i++) {
+          predictions.add(MapEntry(labels[i], prediction[i]));
+        }
+        
+        predictions.sort((a, b) => b.value.compareTo(a.value));
+        final top3 = predictions.take(3).toList();
+
         setState(() {
-          _predictionResult = 'Tahmin: $predictedLabel (${(prediction[maxIndex] * 100).toStringAsFixed(2)}%)';
+          _predictionResult = 'Prediction: ${top3[0].key} (${(top3[0].value * 100).toStringAsFixed(2)}%)';
         });
 
-        if (diseaseData.containsKey(predictedLabel)) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DiseaseDetailScreen(
-                title: predictedLabel,
-                imagePath: diseaseData[predictedLabel]!['image'] as String,
-                details: diseaseData[predictedLabel]!['details'] as Map<String, String>,
-              ),
-            ),
-          );
+        if (diseaseData.containsKey(top3[0].key)) {
+          // ignore: use_build_context_synchronously
+            // ignore: use_build_context_synchronously
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => DiseaseDetailScreen(
+        title: top3[0].key,
+        imagePath: diseaseData[top3[0].key]!['image'] as String,
+        details: diseaseData[top3[0].key]!['details'] as Map<String, String>,
+        predictions: top3,
+      ),
+    ),
+  );
         }
       }
     }

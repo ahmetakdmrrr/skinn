@@ -4,16 +4,110 @@ class DiseaseDetailScreen extends StatelessWidget {
   final String title;
   final String imagePath;
   final Map<String, String> details;
+  final List<MapEntry<String, double>>? predictions;
 
   const DiseaseDetailScreen({
     super.key,
     required this.title,
     required this.imagePath,
     required this.details,
+    this.predictions,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Dialog'u göster
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Container(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Diagnosis Results',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF007D41),
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  if (predictions != null)
+                    ...predictions!.map((pred) => Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            pred.key,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          Text(
+                            '${(pred.value * 100).toStringAsFixed(1)}%',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF007D41),
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                        ],
+                      ),
+                    )).toList(),
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'Note: These results are predictive.\nPlease consult a dermatologist for accurate diagnosis.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey[600],
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF007D41),
+                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: Text(
+                      'Detail',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'Poppins',
+                        color: Colors.white, // Yazı rengi beyaz yapıldı
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    });
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
