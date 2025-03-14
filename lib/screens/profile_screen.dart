@@ -1,9 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:skinn/screens/start_screen.dart';
 import '../providers/theme_provider.dart';
+import '../utils/shared_preferences_helper.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  void _handleLogout() async {
+    // Logout işlemi
+    await SharedPreferencesHelper.setLoggedIn(false);
+    
+    if (mounted) {
+      // Tüm sayfaları temizleyip StartScreen'e yönlendir
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const Startscreen()),
+        (Route<dynamic> route) => false, // Tüm route'ları temizle
+      );
+    }
+  }
+
+  Widget _buildSettingItem(String title, IconData icon, BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
+    if (title == 'Theme') {
+      return ListTile(
+        leading: Icon(icon, color: Color(0xFF007D41)),
+        title: Text(
+          title,
+          style: TextStyle(fontFamily: 'Poppins'),
+        ),
+        trailing: Switch(
+          value: themeProvider.isDarkMode,
+          onChanged: (value) {
+            themeProvider.toggleTheme();
+          },
+          activeColor: Color(0xFF007D41),
+        ),
+      );
+    }
+
+    return ListTile(
+      leading: Icon(icon, color: Color(0xFF007D41)),
+      title: Text(
+        title,
+        style: TextStyle(fontFamily: 'Poppins'),
+      ),
+      trailing: Icon(Icons.chevron_right),
+      onTap: () {},
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +167,7 @@ class ProfileScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: _handleLogout,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFF007D41),
                           minimumSize: Size(double.infinity, 50),
@@ -131,14 +182,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 10),
                       OutlinedButton(
-                        onPressed: () {
-                          // Implement logout logic
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            '/login',
-                            (route) => false,
-                          );
-                        },
+                        onPressed: _handleLogout,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.red,
                           minimumSize: Size(double.infinity, 50),
@@ -204,37 +248,6 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSettingItem(String title, IconData icon, BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    
-    if (title == 'Theme') {
-      return ListTile(
-        leading: Icon(icon, color: Color(0xFF007D41)),
-        title: Text(
-          title,
-          style: TextStyle(fontFamily: 'Poppins'),
-        ),
-        trailing: Switch(
-          value: themeProvider.isDarkMode,
-          onChanged: (value) {
-            themeProvider.toggleTheme();
-          },
-          activeColor: Color(0xFF007D41),
-        ),
-      );
-    }
-
-    return ListTile(
-      leading: Icon(icon, color: Color(0xFF007D41)),
-      title: Text(
-        title,
-        style: TextStyle(fontFamily: 'Poppins'),
-      ),
-      trailing: Icon(Icons.chevron_right),
-      onTap: () {},
     );
   }
 }

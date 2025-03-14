@@ -3,6 +3,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'disease_detail_screen.dart';
 import 'package:skinn/services/model_service.dart';
+import 'package:skinn/utils/shared_preferences_helper.dart';
+
 class DiagnosisScreen extends StatefulWidget {
   const DiagnosisScreen({super.key});
 
@@ -151,8 +153,27 @@ class _DiagnosisScreenState extends State<DiagnosisScreen> {
     ),
   );
         }
+
+        Map<String, dynamic> diagnosisData = {
+          'date': DateTime.now().toIso8601String(),
+          'prediction': top3[0].key,
+          'confidence': top3[0].value,
+        };
+
+        _saveDiagnosis(diagnosisData);
       }
     }
+  }
+
+  void _saveDiagnosis(Map<String, dynamic> diagnosisData) async {
+    // Mevcut geçmişi al
+    List<Map<String, dynamic>> history = await SharedPreferencesHelper.getDiagnosisHistory();
+    
+    // Yeni teşhisi ekle
+    history.add(diagnosisData);
+    
+    // Güncellenmiş geçmişi kaydet
+    await SharedPreferencesHelper.saveDiagnosisHistory(history);
   }
 
   @override
