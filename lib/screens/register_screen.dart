@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:skinn/screens/main_screen.dart';  
+import 'package:skinn/screens/main_screen.dart';
 import 'package:skinn/utils/shared_preferences_helper.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -93,7 +93,9 @@ class _RegisterscreenWidgetState extends State<RegisterScreen> {
                           controller: _nameController,
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
                           ),
                         ),
                       ),
@@ -122,7 +124,9 @@ class _RegisterscreenWidgetState extends State<RegisterScreen> {
                           controller: _surnameController,
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
                           ),
                         ),
                       ),
@@ -157,8 +161,12 @@ class _RegisterscreenWidgetState extends State<RegisterScreen> {
                           },
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                            errorStyle: TextStyle(height: 0), // Hata mesajını gizle
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
+                            errorStyle: TextStyle(
+                              height: 0,
+                            ), // Hata mesajını gizle
                           ),
                         ),
                       ),
@@ -188,7 +196,9 @@ class _RegisterscreenWidgetState extends State<RegisterScreen> {
                           obscureText: true,
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
                           ),
                         ),
                       ),
@@ -218,7 +228,9 @@ class _RegisterscreenWidgetState extends State<RegisterScreen> {
                           obscureText: true,
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
                           ),
                         ),
                       ),
@@ -228,11 +240,14 @@ class _RegisterscreenWidgetState extends State<RegisterScreen> {
                       Center(
                         child: GestureDetector(
                           onTap: () {
-                            if (_passwordController.text == _verifyPasswordController.text) {
+                            if (_passwordController.text ==
+                                _verifyPasswordController.text) {
                               _handleRegister();
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Şifreler eşleşmiyor')),
+                                const SnackBar(
+                                  content: Text('Şifreler eşleşmiyor'),
+                                ),
                               );
                             }
                           },
@@ -325,9 +340,9 @@ class _RegisterscreenWidgetState extends State<RegisterScreen> {
       } catch (e) {
         // Hata durumunda kullanıcıyı bilgilendir
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Kayıt işlemi başarısız: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Kayıt işlemi başarısız: $e')));
         }
       }
     }

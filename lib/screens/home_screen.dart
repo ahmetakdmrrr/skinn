@@ -24,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final userData = await SharedPreferencesHelper.getUserData();
     if (userData != null) {
       setState(() {
-        _fullName = userData['fullName'] ?? 'User';
+        _fullName = userData['name'] ?? 'User';
       });
     }
   }
@@ -40,9 +40,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image captured: ${image.path}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Image captured: ${image.path}')));
     }
   }
 
@@ -121,15 +121,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _getMonth(int month) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return months[month - 1];
   }
 
   String _getImageForCondition(String condition) {
     if (condition.isEmpty) return 'assets/images/default_skin.jpg';
-    
+
     final Map<String, String> conditionImages = {
       'Acne': 'assets/images/acneFace.jpg',
       'Eczema': 'assets/images/eczamaHand.jpg',
@@ -335,11 +345,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildHealthTip('Sun Protection', 'Use sunscreen with at least SPF 30', Icons.wb_sunny),
+                        _buildHealthTip(
+                          'Sun Protection',
+                          'Use sunscreen with at least SPF 30',
+                          Icons.wb_sunny,
+                        ),
                         SizedBox(width: 10),
-                        _buildHealthTip('Hydration', 'Drink 8-10 glasses of water daily', Icons.water_drop),
+                        _buildHealthTip(
+                          'Hydration',
+                          'Drink 8-10 glasses of water daily',
+                          Icons.water_drop,
+                        ),
                         SizedBox(width: 10),
-                        _buildHealthTip('Skin Care', 'Moisturize your skin daily', Icons.face),
+                        _buildHealthTip(
+                          'Skin Care',
+                          'Moisturize your skin daily',
+                          Icons.face,
+                        ),
                       ],
                     ),
                   ),
